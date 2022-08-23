@@ -5,7 +5,7 @@
     </div>
     <ul class="current">
       <li
-        v-for="tag in dataSource"
+        v-for="tag in tagList"
         :key="tag.id"
         :class="{ selected: selectedTags.indexOf(tag) >= 0 }"
         @click="toggle(tag)"
@@ -19,10 +19,21 @@
 <script lang="ts">
 import Vue from "vue";
 import { Component, Prop } from "vue-property-decorator";
+import { mixins } from "vue-class-component";
+import TagHelper from "@/mixins/TagHelper";
+
 @Component
-export default class Tags extends Vue {
-  @Prop() readonly dataSource: string[] | undefined;
+export default class Tags extends mixins(TagHelper) {
   selectedTags: string[] = [];
+
+  get tagList() {
+    return this.$store.state.tagList;
+  }
+
+  create() {
+    this.$store.commit("fetchTags");
+  }
+
   toggle(tag: string) {
     const index = this.selectedTags.indexOf(tag);
     if (index >= 0) {
@@ -30,19 +41,13 @@ export default class Tags extends Vue {
     } else {
       this.selectedTags.push(tag);
     }
-  }
-  create() {
-    const name = window.prompt("请输入标签名");
-    if (name === "") {
-      window.alert("标签名不能为空");
-    } else if (this.dataSource) {
-      this.$emit("update:dataSource", [...this.dataSource, name]);
-    }
+    this.$emit("update:value", this.selectedTags);
   }
 }
 </script>
 
 <style lang="scss" scoped>
+@use "sass:math";
 .tags {
   background: white;
   font-size: 16px;
@@ -59,7 +64,7 @@ export default class Tags extends Vue {
       $h: 24px;
       height: $h;
       line-height: $h;
-      border-radius: $h/2;
+      border-radius: math.div($h, 2);
       padding: 0 16px;
       margin-right: 12px;
       margin-top: 4px;
